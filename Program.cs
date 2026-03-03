@@ -330,11 +330,7 @@ internal class Program
         }
     }
 
-    // ─────────────────────────────────────────
-    // GuardaJugada
-    // Añade el movimiento al historial si hay espacio disponible
-    // ─────────────────────────────────────────
-    static void GuardaJugada(ref Memoria mem, Coor pos, Coor dir)
+    static void GuardaJugada(ref Memoria mem, Coor pos, Coor dir) // GuardaJugada: Añade el movimiento al historial si hay espacio disponible
     {
         if (mem.indice < mem.jugadas.Length)
         {
@@ -344,12 +340,7 @@ internal class Program
         }
     }
 
-    // ─────────────────────────────────────────
-    // DeshaceJugada
-    // Deshace el último movimiento: mueve el cursor a donde estaba
-    // y aplica la dirección opuesta para revertir el bloque
-    // ─────────────────────────────────────────
-    static void DeshaceJugada(ref Estado est, ref Memoria mem)
+    static void DeshaceJugada(ref Estado est, ref Memoria mem) // DeshaceJugada: Deshace el último movimiento: mueve el cursor a donde estaba y aplica la dirección opuesta para revertir el bloque
     {
         if (mem.indice > 0)
         {
@@ -373,12 +364,7 @@ internal class Program
         }
     }
 
-    // ─────────────────────────────────────────
-    // ProcesaInput
-    // Actualiza el estado y la memoria según el input recibido.
-    // Guarda la jugada solo si el bloque se movió realmente.
-    // ─────────────────────────────────────────
-    static void ProcesaInput(ref Estado est, ref Memoria mem, char c)
+    static void ProcesaInput(ref Estado est, ref Memoria mem, char c) // ProcesaInput: Actualiza el estado y la memoria según el input recibido. Guarda la jugada solo si el bloque se movió realmente.
     {
         Coor dir = new Coor();
 
@@ -396,7 +382,9 @@ internal class Program
                     Coor posAntes = est.act;
                     MueveBloque(ref est, dir);
                     if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                    {
                         GuardaJugada(ref mem, posAntes, dir);
+                    }
                 }
                 else MueveCursor(ref est, dir);
                 break;
@@ -408,7 +396,9 @@ internal class Program
                     Coor posAntes = est.act;
                     MueveBloque(ref est, dir);
                     if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                    {
                         GuardaJugada(ref mem, posAntes, dir);
+                    }
                 }
                 else MueveCursor(ref est, dir);
                 break;
@@ -420,7 +410,9 @@ internal class Program
                     Coor posAntes = est.act;
                     MueveBloque(ref est, dir);
                     if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                    {
                         GuardaJugada(ref mem, posAntes, dir);
+                    }
                 }
                 else MueveCursor(ref est, dir);
                 break;
@@ -432,7 +424,9 @@ internal class Program
                     Coor posAntes = est.act;
                     MueveBloque(ref est, dir);
                     if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                    {
                         GuardaJugada(ref mem, posAntes, dir);
+                    }
                 }
                 else MueveCursor(ref est, dir);
                 break;
@@ -466,20 +460,16 @@ internal class Program
         return d;
     }
 
-    // ─────────────────────────────────────────
-    // GestionaRecord
-    // Busca el record del nivel en records.txt.
-    // Si no existe lo crea. Si existe compara y guarda el menor.
-    // ─────────────────────────────────────────
-    static void GestionaRecord(int nivel, int movimientos)
+
+    static void GestionaRecord(int nivel, int movimientos) //GestionaRecord: Busca el record del nivel en records.txt. Si no existe lo crea. Si existe compara y guarda el menor.
     {
         string[] lineas = new string[100];
         int numLineas = 0;
+        StreamReader sr = new StreamReader("records.txt");
 
         // Leer el archivo si existe
-        if (File.Exists("records.txt"))
+        if (sr != null)
         {
-            StreamReader sr = new StreamReader("records.txt");
             string linea;
             while ((linea = sr.ReadLine()) != null && numLineas < lineas.Length)
             {
@@ -495,7 +485,9 @@ internal class Program
         {
             string[] partes = lineas[i].Split(' ');
             if (partes.Length == 2 && int.Parse(partes[0]) == nivel)
+            {
                 posRecord = i;
+            }
         }
 
         bool nuevoRecord = false;
@@ -521,12 +513,17 @@ internal class Program
         // Reescribir el archivo con los datos actualizados
         StreamWriter sw = new StreamWriter("records.txt");
         for (int i = 0; i < numLineas; i++)
+        {
             sw.WriteLine(lineas[i]);
+        }
         sw.Close();
 
         // Informar al usuario del resultado
         if (nuevoRecord)
+        {
             Console.WriteLine("¡Nuevo record en el nivel " + nivel + "! " + movimientos + " movimientos.");
+        }
+
         else
         {
             int recordGuardado = int.Parse(lineas[posRecord].Split(' ')[1]);
