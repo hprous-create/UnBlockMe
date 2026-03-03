@@ -16,17 +16,31 @@ internal class Program
     {// estado del juego
 
         public char[,] mat;
-        // ’#’ muro; ’.’ libre; letras ’a’,’b’ ... bloques
+        // '#' muro; '.' libre; letras 'a','b' ... bloques
 
         public char obj;
         // char correspondiente al bloque objetivo (el que hay que sacar)
 
         public Coor act, sal; // posiciones del cursor y de la salida
         public bool sel;
-        // idica si hay bloque seleccionado para mover o no
+        // indica si hay bloque seleccionado para mover o no
     }
 
-    // ’a’->1, ’b’->2... descartar el 0=negro
+    // Un movimiento queda definido por la posición del cursor y la dirección
+    struct Jugada
+    {
+        public Coor pos; // posición del cursor cuando se realizó el movimiento
+        public Coor dir; // dirección del movimiento
+    }
+
+    // Historial de movimientos realizados
+    struct Memoria
+    {
+        public Jugada[] jugadas; // array de jugadas (máximo 100)
+        public int indice;       // índice a la primera posición libre
+    }
+
+    // 'a'->1, 'b'->2... descartar el 0=negro
     static int BloqueToInt(char c)
     {
         return ((int)c) - ((int)'a') + 1;
@@ -159,7 +173,6 @@ internal class Program
                     {
                         colorBloque = ConsoleColor.Green;
                     }
-
                     else
                     {
                         int idx = (BloqueToInt(celda) - 1) % coloresBloques.Length;
@@ -203,8 +216,8 @@ internal class Program
             for (int j = 0; j < cols && fObj == -1; j++)
             {
                 if (est.mat[i, j] == est.obj)
-                { 
-                    fObj = i; cObj = j; 
+                {
+                    fObj = i; cObj = j;
                 }
             }
         }
@@ -245,7 +258,6 @@ internal class Program
         }
     }
 
-
     static Coor BuscaCabeza(ref Estado est, Coor dir)
     {
         char bloque = est.mat[est.act.x, est.act.y];
@@ -272,7 +284,6 @@ internal class Program
     {
         if (est.sel)
         {
-
             char bloque = est.mat[est.act.x, est.act.y];
 
             int filas = est.mat.GetLength(0);
@@ -319,7 +330,55 @@ internal class Program
         }
     }
 
-    static void ProcesaInput(ref Estado est, char c)
+    // ─────────────────────────────────────────
+    // GuardaJugada
+    // Añade el movimiento al historial si hay espacio disponible
+    // ─────────────────────────────────────────
+    static void GuardaJugada(ref Memoria mem, Coor pos, Coor dir)
+    {
+        if (mem.indice < mem.jugadas.Length)
+        {
+            mem.jugadas[mem.indice].pos = pos;
+            mem.jugadas[mem.indice].dir = dir;
+            mem.indice++;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // DeshaceJugada
+    // Deshace el último movimiento: mueve el cursor a donde estaba
+    // y aplica la dirección opuesta para revertir el bloque
+    // ─────────────────────────────────────────
+    static void DeshaceJugada(ref Estado est, ref Memoria mem)
+    {
+        if (mem.indice > 0)
+        {
+            mem.indice--;
+
+            Coor posAnterior = mem.jugadas[mem.indice].pos;
+            Coor dirOriginal = mem.jugadas[mem.indice].dir;
+
+            // Volver el cursor a donde estaba cuando se hizo el movimiento
+            est.act = posAnterior;
+
+            // Construir la dirección opuesta
+            Coor dirOpuesta = new Coor();
+            dirOpuesta.x = -dirOriginal.x;
+            dirOpuesta.y = -dirOriginal.y;
+
+            // Activar sel temporalmente para poder llamar a MueveBloque
+            est.sel = true;
+            MueveBloque(ref est, dirOpuesta);
+            est.sel = false;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // ProcesaInput
+    // Actualiza el estado y la memoria según el input recibido.
+    // Guarda la jugada solo si el bloque se movió realmente.
+    // ─────────────────────────────────────────
+    static void ProcesaInput(ref Estado est, ref Memoria mem, char c)
     {
         Coor dir = new Coor();
 
@@ -332,30 +391,54 @@ internal class Program
 
             case 'u':
                 dir.x = -1; dir.y = 0;
-                if (est.sel) MueveBloque(ref est, dir);
+                if (est.sel)
+                {
+                    Coor posAntes = est.act;
+                    MueveBloque(ref est, dir);
+                    if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                        GuardaJugada(ref mem, posAntes, dir);
+                }
                 else MueveCursor(ref est, dir);
                 break;
 
             case 'd':
                 dir.x = 1; dir.y = 0;
-                if (est.sel) MueveBloque(ref est, dir);
+                if (est.sel)
+                {
+                    Coor posAntes = est.act;
+                    MueveBloque(ref est, dir);
+                    if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                        GuardaJugada(ref mem, posAntes, dir);
+                }
                 else MueveCursor(ref est, dir);
                 break;
 
             case 'l':
                 dir.x = 0; dir.y = -1;
-                if (est.sel) MueveBloque(ref est, dir);
+                if (est.sel)
+                {
+                    Coor posAntes = est.act;
+                    MueveBloque(ref est, dir);
+                    if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                        GuardaJugada(ref mem, posAntes, dir);
+                }
                 else MueveCursor(ref est, dir);
                 break;
 
             case 'r':
                 dir.x = 0; dir.y = 1;
-                if (est.sel) MueveBloque(ref est, dir);
+                if (est.sel)
+                {
+                    Coor posAntes = est.act;
+                    MueveBloque(ref est, dir);
+                    if (est.act.x != posAntes.x || est.act.y != posAntes.y)
+                        GuardaJugada(ref mem, posAntes, dir);
+                }
                 else MueveCursor(ref est, dir);
                 break;
 
             case 'z':
-                // Deshacer jugada (se implementará más adelante)
+                DeshaceJugada(ref est, ref mem);
                 break;
         }
     }
@@ -370,17 +453,85 @@ internal class Program
                 string tecla = Console.ReadKey().Key.ToString();
                 switch (tecla)
                 {
-                    case "LeftArrow": d = 'l'; break; //direcciones
+                    case "LeftArrow": d = 'l'; break; // direcciones
                     case "UpArrow": d = 'u'; break;
                     case "RightArrow": d = 'r'; break;
                     case "DownArrow": d = 'd'; break;
-                    case "Delete": d = 'z'; break; //deshacer jugada
-                    case "Escape": d = 'q'; break; //salir
-                    case "Spacebar": d = 's'; break; //selección de bloque
+                    case "Delete": d = 'z'; break; // deshacer jugada
+                    case "Escape": d = 'q'; break; // salir
+                    case "Spacebar": d = 's'; break; // selección de bloque
                 }
             }
         }
         return d;
+    }
+
+    // ─────────────────────────────────────────
+    // GestionaRecord
+    // Busca el record del nivel en records.txt.
+    // Si no existe lo crea. Si existe compara y guarda el menor.
+    // ─────────────────────────────────────────
+    static void GestionaRecord(int nivel, int movimientos)
+    {
+        string[] lineas = new string[100];
+        int numLineas = 0;
+
+        // Leer el archivo si existe
+        if (File.Exists("records.txt"))
+        {
+            StreamReader sr = new StreamReader("records.txt");
+            string linea;
+            while ((linea = sr.ReadLine()) != null && numLineas < lineas.Length)
+            {
+                lineas[numLineas] = linea;
+                numLineas++;
+            }
+            sr.Close();
+        }
+
+        // Buscar si ya hay un record para este nivel
+        int posRecord = -1;
+        for (int i = 0; i < numLineas && posRecord == -1; i++)
+        {
+            string[] partes = lineas[i].Split(' ');
+            if (partes.Length == 2 && int.Parse(partes[0]) == nivel)
+                posRecord = i;
+        }
+
+        bool nuevoRecord = false;
+
+        if (posRecord == -1)
+        {
+            // Primera vez que se completa este nivel
+            lineas[numLineas] = nivel + " " + movimientos;
+            numLineas++;
+            nuevoRecord = true;
+        }
+        else
+        {
+            // Ya existe: comparar con el record guardado
+            int recordGuardado = int.Parse(lineas[posRecord].Split(' ')[1]);
+            if (movimientos < recordGuardado)
+            {
+                lineas[posRecord] = nivel + " " + movimientos;
+                nuevoRecord = true;
+            }
+        }
+
+        // Reescribir el archivo con los datos actualizados
+        StreamWriter sw = new StreamWriter("records.txt");
+        for (int i = 0; i < numLineas; i++)
+            sw.WriteLine(lineas[i]);
+        sw.Close();
+
+        // Informar al usuario del resultado
+        if (nuevoRecord)
+            Console.WriteLine("¡Nuevo record en el nivel " + nivel + "! " + movimientos + " movimientos.");
+        else
+        {
+            int recordGuardado = int.Parse(lineas[posRecord].Split(' ')[1]);
+            Console.WriteLine("Record del nivel " + nivel + ": " + recordGuardado + " movimientos. Esta vez: " + movimientos + ".");
+        }
     }
 
     static void Main(string[] args)
@@ -392,6 +543,11 @@ internal class Program
         MarcaSalida(ref est);
         Render(est);
 
+        // Inicializar memoria de jugadas
+        Memoria mem = new Memoria();
+        mem.jugadas = new Jugada[100];
+        mem.indice = 0;
+
         char input = ' ';
 
         while (est.mat[est.sal.x, est.sal.y] != est.obj && input != 'q')
@@ -399,7 +555,7 @@ internal class Program
             input = LeeInput();
             if (input != 'q')
             {
-                ProcesaInput(ref est, input);
+                ProcesaInput(ref est, ref mem, input);
                 Render(est);
             }
         }
@@ -407,7 +563,8 @@ internal class Program
         Console.ResetColor();
         if (est.mat[est.sal.x, est.sal.y] == est.obj)
         {
-            Console.WriteLine("¡Felicidades! Has completado el nivel");
+            Console.WriteLine("¡Felicidades! Has completado el nivel en " + mem.indice + " movimientos.");
+            GestionaRecord(nivel, mem.indice);
         }
         else Console.WriteLine("Juego terminado");
     }
