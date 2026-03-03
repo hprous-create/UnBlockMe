@@ -1,34 +1,39 @@
 ﻿// Hector Prous Arroyo
-//Javier Hoyos Hiunta
+//Javier Hoyos Giunta
 
 using System;
 using System.IO;
+using System.Numerics;
 
-struct Coor
+internal class Program
 {
-    public int x, y;
-}
+    // coordenadas (x,y) para representar posiciones y direcciones de desplazamiento
+    struct Coor
+    {
+        public int x, y;
+    }
 
-struct Estado
-{
-    public char[,] mat;
-    public char obj;
-    public Coor act;
-    public Coor sal;
-    public bool sel;
-}
+    struct Estado
+    { // estado del juego
 
-class Program
-{
+        public char[,] mat;
+        // ’#’ muro; ’.’ libre; letras ’a’,’b’ ... bloques
+
+        public char obj;
+        // char correspondiente al bloque objetivo (el que hay que sacar)
+
+        public Coor act, sal; // posiciones del cursor y de la salida
+        public bool sel;
+        // idica si hay bloque seleccionado para mover o no
+    }
+
     // 'a'->1, 'b'->2, ...
     static int BloqueToInt(char c)
     {
         return ((int)c) - ((int)'a') + 1;
     }
 
-    // ─────────────────────────────────────────
-    // LeeNivel
-    // ─────────────────────────────────────────
+
     static Estado LeeNivel(string file, int n)
     {
         Estado est = new Estado();
@@ -46,7 +51,7 @@ class Program
         if (!encontrado)
         {
             sr.Close();
-            Console.WriteLine("Nivel " + n + " no encontrado.");
+            Console.WriteLine("Nivel " + n + " no encontrado");
             return est;
         }
 
@@ -63,17 +68,27 @@ class Program
 
         int numCols = 0;
         for (int i = 0; i < numFilas; i++)
+        {
             if (filas[i].Length > numCols) numCols = filas[i].Length;
-
+        }
+            
         est.mat = new char[numFilas + 2, numCols + 2];
 
         for (int i = 0; i < numFilas + 2; i++)
+        {
             for (int j = 0; j < numCols + 2; j++)
+            {
                 est.mat[i, j] = '#';
+            }
+        }
 
         for (int i = 0; i < numFilas; i++)
+        {
             for (int j = 0; j < filas[i].Length; j++)
+            {
                 est.mat[i + 1, j + 1] = filas[i][j];
+            }
+        }
 
         est.act.x = 1;
         est.act.y = 1;
@@ -84,15 +99,12 @@ class Program
         return est;
     }
 
-    // ─────────────────────────────────────────
-    // Render
-    // ─────────────────────────────────────────
     static void Render(Estado est)
     {
         ConsoleColor colorHueco = ConsoleColor.DarkGray; // fondo gris oscuro
         ConsoleColor colorMuro = ConsoleColor.Gray;     // paredes gris claro
 
-        // Paleta de colores para los bloques (inspirada en Fig. 2)
+        // Paleta de colores para los bloques 
         ConsoleColor[] coloresBloques = {
             ConsoleColor.Green,
             ConsoleColor.Blue,
@@ -161,7 +173,7 @@ class Program
                     }
                     else
                     {
-                        Console.ForegroundColor = colorBloque; // mismo color → letra invisible
+                        Console.ForegroundColor = colorBloque; // mismo color: letra invisible
                         Console.Write("  ");
                     }
                 }
@@ -180,9 +192,7 @@ class Program
         Console.WriteLine();
     }
 
-    // ─────────────────────────────────────────
-    // MarcaSalida
-    // ─────────────────────────────────────────
+
     static void MarcaSalida(ref Estado est)
     {
         int filas = est.mat.GetLength(0);
@@ -190,9 +200,15 @@ class Program
 
         int fObj = -1, cObj = -1;
         for (int i = 0; i < filas && fObj == -1; i++)
+        {
             for (int j = 0; j < cols && fObj == -1; j++)
+            {
                 if (est.mat[i, j] == est.obj)
-                { fObj = i; cObj = j; }
+                { 
+                    fObj = i; cObj = j; 
+                }
+            }
+        }
 
         bool horizontal = (cObj + 1 < cols && est.mat[fObj, cObj + 1] == est.obj);
 
@@ -208,9 +224,7 @@ class Program
         }
     }
 
-    // ─────────────────────────────────────────
-    // MueveCursor
-    // ─────────────────────────────────────────
+
     static void MueveCursor(ref Estado est, Coor dir)
     {
         if (est.sel) return;
@@ -229,9 +243,7 @@ class Program
         est.act.y = ny;
     }
 
-    // ─────────────────────────────────────────
-    // BuscaCabeza (auxiliar de MueveBloque)
-    // ─────────────────────────────────────────
+
     static Coor BuscaCabeza(ref Estado est, Coor dir)
     {
         char bloque = est.mat[est.act.x, est.act.y];
@@ -240,12 +252,23 @@ class Program
         int filas = est.mat.GetLength(0);
         int cols = est.mat.GetLength(1);
 
-        while (true)
+        bool ok = true;
+
+        while (ok)
         {
             int nx = cabeza.x + dir.x;
             int ny = cabeza.y + dir.y;
-            if (nx < 0 || nx >= filas || ny < 0 || ny >= cols) break;
-            if (est.mat[nx, ny] != bloque) break;
+
+            if (nx < 0 || nx >= filas || ny < 0 || ny >= cols)
+            {
+                ok = false;
+            }
+
+            if (est.mat[nx, ny] != bloque)
+            {
+                ok = false;
+            }
+
             cabeza.x = nx;
             cabeza.y = ny;
         }
@@ -253,13 +276,9 @@ class Program
         return cabeza;
     }
 
-    // ─────────────────────────────────────────
-    // MueveBloque
-    // Solo permite moverse en el eje natural del bloque:
-    //   horizontal → izquierda/derecha
-    //   vertical   → arriba/abajo
-    // ─────────────────────────────────────────
-    static void MueveBloque(ref Estado est, Coor dir)
+   
+
+    static void MueveBloque(ref Estado est, Coor dir) // Solo permite moverse en el eje natural del bloque, horizontal: izquierda/derecha vertical: arriba/abajo
     {
         if (!est.sel) return;
 
@@ -302,9 +321,7 @@ class Program
         est.act.y += dir.y;
     }
 
-    // ─────────────────────────────────────────
-    // ProcesaInput
-    // ─────────────────────────────────────────
+
     static void ProcesaInput(ref Estado est, char c)
     {
         Coor dir = new Coor();
@@ -313,8 +330,7 @@ class Program
         {
             case 's':
                 char celdaAct = est.mat[est.act.x, est.act.y];
-                if (celdaAct != '.' && celdaAct != '#')
-                    est.sel = !est.sel;
+                if (celdaAct != '.' && celdaAct != '#') est.sel = !est.sel;
                 break;
 
             case 'u':
@@ -347,9 +363,7 @@ class Program
         }
     }
 
-    // ─────────────────────────────────────────
-    // LeeInput (proporcionado por el enunciado)
-    // ─────────────────────────────────────────
+
     static char LeeInput()
     {
         char d = ' ';
@@ -373,12 +387,9 @@ class Program
         return d;
     }
 
-    // ─────────────────────────────────────────
-    // Main
-    // ─────────────────────────────────────────
+
     static void Main(string[] args)
     {
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         Console.Write("Introduce el número de nivel: ");
         int nivel = int.Parse(Console.ReadLine());
@@ -400,9 +411,7 @@ class Program
         }
 
         Console.ResetColor();
-        if (est.mat[est.sal.x, est.sal.y] == est.obj)
-            Console.WriteLine("¡Felicidades! Has completado el nivel.");
-        else
-            Console.WriteLine("Juego terminado.");
+        if (est.mat[est.sal.x, est.sal.y] == est.obj) Console.WriteLine("¡Felicidades! Has completado el nivel");
+        else Console.WriteLine("Juego terminado");
     }
 }
