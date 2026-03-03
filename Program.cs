@@ -51,6 +51,9 @@ internal class Program
         Estado est = new Estado();
         StreamReader sr = new StreamReader(file);
         string linea;
+        string[] filas = new string[100];
+        int numFilas = 0;
+        int numCols = 0;
 
         bool encontrado = false;
         while (!encontrado && (linea = sr.ReadLine()) != null)
@@ -71,8 +74,6 @@ internal class Program
 
         est.obj = sr.ReadLine()[0];
 
-        string[] filas = new string[100];
-        int numFilas = 0;
         while ((linea = sr.ReadLine()) != null && linea != "")
         {
             filas[numFilas] = linea;
@@ -80,7 +81,6 @@ internal class Program
         }
         sr.Close();
 
-        int numCols = 0;
         for (int i = 0; i < numFilas; i++)
         {
             if (filas[i].Length > numCols) numCols = filas[i].Length;
@@ -133,10 +133,10 @@ internal class Program
             ConsoleColor.DarkGreen
         };
 
-        Console.Clear();
-
         int filas = est.mat.GetLength(0);
         int cols = est.mat.GetLength(1);
+
+        Console.Clear();
 
         for (int i = 0; i < filas; i++)
         {
