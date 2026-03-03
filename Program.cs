@@ -33,22 +33,58 @@ namespace ConsoleApp1
 
         static Estado LeeNivel(string file, int n)
         {
-            Estado juego = new Estado();
-            StreamReader entrada = new StreamReader(file);
 
-            string cadena = "";
+            Estado est = new Estado();
 
-            //Falta saltar una linea aqui (la de nivel x)
-            juego.obj = char.Parse(entrada.ReadLine());
-
-            while (!String.IsNullOrWhiteSpace(entrada.ReadLine()))
+            StreamReader sr = new StreamReader(file)
             {
-                cadena += entrada.ReadLine();
-                cadena += "$";
-            }
+                string linea;
 
-            entrada.Close();
-            return juego;
+                // busca nivel 
+                bool encontrado = false;
+                while (!encontrado && (linea = sr.ReadLine()) != null)
+                {
+                    string[] partes = linea.Split(' ');
+                    if (partes[0] == "level" && int.Parse(partes[1]) == n)
+                        encontrado = true;
+                }
+
+
+                // leer bloque objetivo
+                est.obj = sr.ReadLine()[0];
+
+                // leer las filas 
+                string[] filas = new string[100];
+                int numFilas = 0;
+                while ((linea = sr.ReadLine()) != null && linea != "")
+                {
+                    filas[numFilas] = linea;
+                    numFilas++;
+                }
+
+                // construccion de la matriz
+                int numCols = 0;
+                for (int i = 0; i < numFilas; i++)
+                    if (filas[i].Length > numCols) numCols = filas[i].Length;
+
+                est.mat = new char[numFilas + 2, numCols + 2];
+
+                for (int i = 0; i < numFilas + 2; i++)
+                    for (int j = 0; j < numCols + 2; j++)
+                        est.mat[i, j] = '#';
+
+                for (int i = 0; i < numFilas; i++)
+                    for (int j = 0; j < filas[i].Length; j++)
+                        est.mat[i + 1, j + 1] = filas[i][j];
+
+                // cursor
+                est.act.x = 1;
+                est.act.y = 1;
+                est.sal.x = 0;
+                est.sal.y = 0;
+                est.sel = false;
+            }
+            return est;
         }
 
         static void Render(Estado est)
