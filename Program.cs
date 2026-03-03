@@ -36,8 +36,8 @@ namespace ConsoleApp1
 
             Estado est = new Estado();
 
-            StreamReader sr = new StreamReader(file)
-            {
+            StreamReader sr = new StreamReader(file);
+            
                 string linea;
 
                 // busca nivel 
@@ -83,7 +83,7 @@ namespace ConsoleApp1
                 est.sal.x = 0;
                 est.sal.y = 0;
                 est.sel = false;
-            }
+            
             return est;
         }
 
