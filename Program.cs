@@ -46,7 +46,7 @@ internal class Program
         return ((int)c) - ((int)'a') + 1;
     }
 
-    static Estado LeeNivel(string file, int n)
+    static Estado LeeNivel(string file, int n) // A partir de un archivo extrae su información y crea un nivel con bordes y bloques
     {
         Estado est = new Estado();
         StreamReader sr = new StreamReader(file);
@@ -113,7 +113,7 @@ internal class Program
         return est;
     }
 
-    static void Render(Estado est)
+    static void Render(Estado est) // Escribe en consola una representación visual del tablero de juego y la interfaz
     {
         ConsoleColor colorHueco = ConsoleColor.DarkGray;
         ConsoleColor colorMuro = ConsoleColor.Gray;
@@ -205,7 +205,7 @@ internal class Program
         Console.WriteLine();
     }
 
-    static void MarcaSalida(ref Estado est)
+    static void MarcaSalida(ref Estado est) // Marca la salida del nivel en función de la orientación del bloque objetivo
     {
         int filas = est.mat.GetLength(0);
         int cols = est.mat.GetLength(1);
@@ -236,7 +236,7 @@ internal class Program
         }
     }
 
-    static void MueveCursor(ref Estado est, Coor dir)
+    static void MueveCursor(ref Estado est, Coor dir) // Mueve el cursor en la dirección correspondiente transformando su posición
     {
         if (!est.sel)
         {
@@ -258,7 +258,7 @@ internal class Program
         }
     }
 
-    static Coor BuscaCabeza(ref Estado est, Coor dir)
+    static Coor BuscaCabeza(ref Estado est, Coor dir) // Devuelve la "cabeza" del bloque seleccionado
     {
         char bloque = est.mat[est.act.x, est.act.y];
         Coor cabeza = est.act;
@@ -280,7 +280,7 @@ internal class Program
         return cabeza;
     }
 
-    static void MueveBloque(ref Estado est, Coor dir)
+    static void MueveBloque(ref Estado est, Coor dir) // Mueve un bloque en la dirección correspondiente si no hay ningún obstáculo delante y solo en la orientación (horizontal o vertical) del bloque
     {
         if (est.sel)
         {
@@ -330,7 +330,7 @@ internal class Program
         }
     }
 
-    static void GuardaJugada(ref Memoria mem, Coor pos, Coor dir) // GuardaJugada: Añade el movimiento al historial si hay espacio disponible
+    static void GuardaJugada(ref Memoria mem, Coor pos, Coor dir) // Añade el movimiento al historial si hay espacio disponible
     {
         if (mem.indice < mem.jugadas.Length)
         {
@@ -340,7 +340,7 @@ internal class Program
         }
     }
 
-    static void DeshaceJugada(ref Estado est, ref Memoria mem) // DeshaceJugada: Deshace el último movimiento: mueve el cursor a donde estaba y aplica la dirección opuesta para revertir el bloque
+    static void DeshaceJugada(ref Estado est, ref Memoria mem) // Deshace el último movimiento: mueve el cursor a donde estaba y aplica la dirección opuesta para revertir el bloque
     {
         if (mem.indice > 0)
         {
@@ -364,7 +364,7 @@ internal class Program
         }
     }
 
-    static void ProcesaInput(ref Estado est, ref Memoria mem, char c) // ProcesaInput: Actualiza el estado y la memoria según el input recibido. Guarda la jugada solo si el bloque se movió realmente.
+    static void ProcesaInput(ref Estado est, ref Memoria mem, char c) // Actualiza el estado y la memoria según el input recibido. Guarda la jugada solo si el bloque se movió realmente.
     {
         Coor dir = new Coor();
 
@@ -461,7 +461,7 @@ internal class Program
     }
 
 
-    static void GestionaRecord(int nivel, int movimientos) //GestionaRecord: Busca el record del nivel en records.txt. Si no existe lo crea. Si existe compara y guarda el menor.
+    static void GestionaRecord(int nivel, int movimientos) // Busca el record del nivel en records.txt. Si no existe lo crea. Si existe compara y guarda el menor.
     {
         string[] lineas = new string[100];
         int numLineas = 0;
